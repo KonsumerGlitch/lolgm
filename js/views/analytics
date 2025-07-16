@@ -1,0 +1,1123 @@
+/**
+ * Analytics View Controller
+ * Manages the analytics UI and user interactions
+ * 
+ * Features:
+ * - Tab navigation
+ * - Data visualization
+ * - Interactive filters
+ * - Real-time updates
+ * - Export functionality
+ */
+
+define([
+    "analytics/analytics",
+    "util/helpers",
+    "util/viewHelpers",
+    "lib/jquery"
+], function(analytics, helpers, viewHelpers, $) {
+    "use strict";
+    
+    var analyticsView = {
+        
+        /**
+         * Initialize the analytics view
+         */
+        init: function() {
+            try {
+                // Initialize analytics system
+                analytics.init();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Initialize charts
+                this.initializeCharts();
+                
+                // Load initial data
+                this.loadInitialData();
+                
+                // Setup auto-refresh
+                this.setupAutoRefresh();
+                
+                console.log("Analytics view initialized successfully");
+                
+            } catch (error) {
+                console.error("Error initializing analytics view:", error);
+                this.showError("Failed to initialize analytics system");
+            }
+        },
+        
+        /**
+         * Setup event listeners for UI interactions
+         */
+        setupEventListeners: function() {
+            var self = this;
+            
+            // Tab navigation
+            $('#analyticsNav a').on('click', function(e) {
+                e.preventDefault();
+                self.switchTab($(this).attr('href'));
+            });
+            
+            // Player stats filters
+            $('#applyFilters').on('click', function() {
+                self.applyPlayerFilters();
+            });
+            
+            // Team analytics filters
+            $('#loadTeamAnalytics').on('click', function() {
+                self.loadTeamAnalytics();
+            });
+            
+            // Box score filters
+            $('#loadBoxScore').on('click', function() {
+                self.loadBoxScore();
+            });
+            
+            // Export functionality
+            $('#exportPlayerStats').on('click', function() {
+                self.exportPlayerStats();
+            });
+            
+            // Player detail modal
+            $(document).on('click', '.view-player-detail', function() {
+                var playerId = $(this).data('player-id');
+                self.showPlayerDetail(playerId);
+            });
+            
+            // OAT position filter
+            $('#oatPositionFilter').on('change', function() {
+                self.filterOATRankings();
+            });
+            
+            // Responsive table handling
+            $(window).on('resize', function() {
+                self.handleTableResize();
+            });
+        },
+        
+        /**
+         * Initialize charts using Chart.js
+         */
+        initializeCharts: function() {
+            try {
+                // Performance trend chart
+                this.performanceChart = new Chart(document.getElementById('performanceChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Average Rating',
+                            data: [],
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Game phase chart
+                this.gamePhaseChart = new Chart(document.getElementById('gamePhaseChart'), {
+                    type: 'radar',
+                    data: {
+                        labels: ['Early Game', 'Mid Game', 'Late Game'],
+                        datasets: [{
+                            label: 'Performance',
+                            data: [0, 0, 0],
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            pointBackgroundColor: '#28a745'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+                
+                // Playstyle chart
+                this.playstyleChart = new Chart(document.getElementById('playstyleChart'), {
+                    type: 'radar',
+                    data: {
+                        labels: ['Aggression', 'Teamfight', 'Split Push', 'Vision', 'Objectives'],
+                        datasets: [{
+                            label: 'Playstyle',
+                            data: [0, 0, 0, 0, 0],
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                            pointBackgroundColor: '#ffc107'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Error initializing charts:", error);
+            }
+        },
+        
+        /**
+         * Load initial data for the analytics view
+         */
+        loadInitialData: function() {
+            try {
+                // Load overview data
+                this.loadOverviewData();
+                
+                // Load player and team lists for filters
+                this.loadFilterOptions();
+                
+                // Load recent games for box scores
+                this.loadRecentGames();
+                
+            } catch (error) {
+                console.error("Error loading initial data:", error);
+                this.showError("Failed to load initial data");
+            }
+        },
+        
+        /**
+         * Load overview data for the dashboard
+         */
+        loadOverviewData: function() {
+            var self = this;
+            
+            try {
+                // Show loading state
+                $('#totalPlayers').text('Loading...');
+                $('#totalGames').text('Loading...');
+                $('#avgRating').text('Loading...');
+                $('#totalMVPs').text('Loading...');
+                
+                // Simulate loading data (replace with actual API calls)
+                setTimeout(function() {
+                    // Update overview metrics
+                    $('#totalPlayers').text('150');
+                    $('#totalGames').text('1,247');
+                    $('#avgRating').text('72.5');
+                    $('#totalMVPs').text('45');
+                    
+                    // Update performance chart
+                    self.updatePerformanceChart();
+                    
+                    // Update top performers
+                    self.updateTopPerformers();
+                    
+                    // Update team rankings
+                    self.updateTeamRankings();
+                    
+                }, 1000);
+                
+            } catch (error) {
+                console.error("Error loading overview data:", error);
+            }
+        },
+        
+        /**
+         * Update performance trend chart
+         */
+        updatePerformanceChart: function() {
+            try {
+                var labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+                var data = [68.5, 71.2, 69.8, 74.1, 72.5];
+                
+                this.performanceChart.data.labels = labels;
+                this.performanceChart.data.datasets[0].data = data;
+                this.performanceChart.update();
+                
+            } catch (error) {
+                console.error("Error updating performance chart:", error);
+            }
+        },
+        
+        /**
+         * Update top performers table
+         */
+        updateTopPerformers: function() {
+            try {
+                var topPerformers = [
+                    { name: 'Faker', position: 'MID', rating: 95.2, kda: 3.8 },
+                    { name: 'Canyon', position: 'JGL', rating: 92.1, kda: 4.2 },
+                    { name: 'Keria', position: 'SUP', rating: 89.7, kda: 2.9 },
+                    { name: 'Gumayusi', position: 'ADC', rating: 88.3, kda: 3.5 },
+                    { name: 'Zeus', position: 'TOP', rating: 87.1, kda: 2.7 }
+                ];
+                
+                var tbody = $('#topPerformers');
+                tbody.empty();
+                
+                topPerformers.forEach(function(player) {
+                    var row = $('<tr>');
+                    row.append($('<td>').text(player.name));
+                    row.append($('<td>').html(
+                        `<span class="position-badge position-${player.position.toLowerCase()}">${player.position}</span>`
+                    ));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${player.rating}</span>`
+                    ));
+                    row.append($('<td>').text(player.kda));
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error updating top performers:", error);
+            }
+        },
+        
+        /**
+         * Update team rankings table
+         */
+        updateTeamRankings: function() {
+            try {
+                var teamRankings = [
+                    { name: 'T1', rating: 91.5, winRate: 0.85, trend: 'up' },
+                    { name: 'GenG', rating: 88.2, winRate: 0.78, trend: 'up' },
+                    { name: 'KT', rating: 82.7, winRate: 0.65, trend: 'down' },
+                    { name: 'DRX', rating: 80.1, winRate: 0.58, trend: 'stable' },
+                    { name: 'LSB', rating: 75.9, winRate: 0.52, trend: 'up' }
+                ];
+                
+                var tbody = $('#teamRankings');
+                tbody.empty();
+                
+                teamRankings.forEach(function(team) {
+                    var row = $('<tr>');
+                    row.append($('<td>').text(team.name));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${team.rating}</span>`
+                    ));
+                    row.append($('<td>').text((team.winRate * 100).toFixed(1) + '%'));
+                    
+                    var trendIcon = '';
+                    if (team.trend === 'up') trendIcon = '<i class="fa fa-arrow-up text-success"></i>';
+                    else if (team.trend === 'down') trendIcon = '<i class="fa fa-arrow-down text-danger"></i>';
+                    else trendIcon = '<i class="fa fa-minus text-muted"></i>';
+                    
+                    row.append($('<td>').html(trendIcon));
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error updating team rankings:", error);
+            }
+        },
+        
+        /**
+         * Load filter options for dropdowns
+         */
+        loadFilterOptions: function() {
+            try {
+                // Load players for player select
+                this.loadPlayerOptions();
+                
+                // Load teams for team select
+                this.loadTeamOptions();
+                
+                // Load seasons for season select
+                this.loadSeasonOptions();
+                
+                // Load recent games for game select
+                this.loadGameOptions();
+                
+            } catch (error) {
+                console.error("Error loading filter options:", error);
+            }
+        },
+        
+        /**
+         * Load player options for filters
+         */
+        loadPlayerOptions: function() {
+            var playerSelect = $('#playerSelect');
+            playerSelect.empty().append('<option value="">All Players</option>');
+            
+            // Simulate loading players (replace with actual API call)
+            var players = [
+                { id: 1, name: 'Faker', position: 'MID' },
+                { id: 2, name: 'Canyon', position: 'JGL' },
+                { id: 3, name: 'Keria', position: 'SUP' }
+            ];
+            
+            players.forEach(function(player) {
+                playerSelect.append(
+                    $('<option>').val(player.id).text(`${player.name} (${player.position})`)
+                );
+            });
+        },
+        
+        /**
+         * Load team options for filters
+         */
+        loadTeamOptions: function() {
+            var teamSelect = $('#teamSelect');
+            teamSelect.empty().append('<option value="">Select Team</option>');
+            
+            // Simulate loading teams (replace with actual API call)
+            var teams = [
+                { id: 1, name: 'T1' },
+                { id: 2, name: 'GenG' },
+                { id: 3, name: 'KT Rolster' }
+            ];
+            
+            teams.forEach(function(team) {
+                teamSelect.append(
+                    $('<option>').val(team.id).text(team.name)
+                );
+            });
+        },
+        
+        /**
+         * Load season options for filters
+         */
+        loadSeasonOptions: function() {
+            var seasonSelect = $('#seasonFilter');
+            seasonSelect.empty().append('<option value="">Current Season</option>');
+            
+            // Add previous seasons
+            for (var i = 1; i <= 5; i++) {
+                seasonSelect.append(
+                    $('<option>').val(i).text(`Season ${i}`)
+                );
+            }
+        },
+        
+        /**
+         * Load game options for box score filter
+         */
+        loadGameOptions: function() {
+            var gameSelect = $('#gameSelect');
+            gameSelect.empty().append('<option value="">Select Game</option>');
+            
+            // Simulate loading recent games (replace with actual API call)
+            var games = [
+                { id: 1, teams: 'T1 vs GenG', date: '2024-01-15' },
+                { id: 2, teams: 'KT vs DRX', date: '2024-01-14' },
+                { id: 3, teams: 'LSB vs HLE', date: '2024-01-13' }
+            ];
+            
+            games.forEach(function(game) {
+                gameSelect.append(
+                    $('<option>').val(game.id).text(`${game.teams} (${game.date})`)
+                );
+            });
+        },
+        
+        /**
+         * Switch between tabs
+         * @param {string} tabId - Target tab ID
+         */
+        switchTab: function(tabId) {
+            try {
+                // Update tab content based on selection
+                switch (tabId) {
+                    case '#playerStats':
+                        this.loadPlayerStats();
+                        break;
+                    case '#teamAnalytics':
+                        this.loadTeamAnalyticsList();
+                        break;
+                    case '#boxScores':
+                        this.loadRecentGames();
+                        break;
+                    case '#mvpAnalysis':
+                        this.loadMVPAnalysis();
+                        break;
+                    case '#oatRankings':
+                        this.loadOATRankings();
+                        break;
+                    case '#synergyAnalysis':
+                        this.loadSynergyAnalysis();
+                        break;
+                }
+                
+            } catch (error) {
+                console.error("Error switching tab:", error);
+            }
+        },
+        
+        /**
+         * Apply player statistics filters
+         */
+        applyPlayerFilters: function() {
+            try {
+                var filters = {
+                    playerId: $('#playerSelect').val(),
+                    position: $('#positionFilter').val(),
+                    season: $('#seasonFilter').val()
+                };
+                
+                this.loadPlayerStats(filters);
+                
+            } catch (error) {
+                console.error("Error applying player filters:", error);
+            }
+        },
+        
+        /**
+         * Load player statistics
+         * @param {Object} filters - Filter options
+         */
+        loadPlayerStats: function(filters) {
+            var self = this;
+            filters = filters || {};
+            
+            try {
+                // Show loading state
+                $('#playerStatsTableBody').html(
+                    '<tr><td colspan="10" class="text-center">Loading player statistics...</td></tr>'
+                );
+                
+                // Simulate loading data (replace with actual API call)
+                setTimeout(function() {
+                    var playerStats = [
+                        {
+                            id: 1,
+                            name: 'Faker',
+                            position: 'MID',
+                            games: 25,
+                            kda: 3.8,
+                            csPerMin: 8.2,
+                            goldPerMin: 425,
+                            damagePerMin: 580,
+                            visionScore: 45,
+                            rating: 95.2
+                        },
+                        {
+                            id: 2,
+                            name: 'Canyon',
+                            position: 'JGL',
+                            games: 23,
+                            kda: 4.2,
+                            csPerMin: 6.1,
+                            goldPerMin: 380,
+                            damagePerMin: 520,
+                            visionScore: 52,
+                            rating: 92.1
+                        }
+                    ];
+                    
+                    self.populatePlayerStatsTable(playerStats);
+                    
+                }, 1000);
+                
+            } catch (error) {
+                console.error("Error loading player stats:", error);
+                this.showError("Failed to load player statistics");
+            }
+        },
+        
+        /**
+         * Populate player statistics table
+         * @param {Array} playerStats - Player statistics data
+         */
+        populatePlayerStatsTable: function(playerStats) {
+            try {
+                var tbody = $('#playerStatsTableBody');
+                tbody.empty();
+                
+                playerStats.forEach(function(player) {
+                    var row = $('<tr>');
+                    
+                    row.append($('<td>').text(player.name));
+                    row.append($('<td>').html(
+                        `<span class="position-badge position-${player.position.toLowerCase()}">${player.position}</span>`
+                    ));
+                    row.append($('<td>').text(player.games));
+                    row.append($('<td>').text(player.kda.toFixed(1)));
+                    row.append($('<td>').text(player.csPerMin.toFixed(1)));
+                    row.append($('<td>').text(player.goldPerMin));
+                    row.append($('<td>').text(player.damagePerMin));
+                    row.append($('<td>').text(player.visionScore));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${player.rating}</span>`
+                    ));
+                    row.append($('<td>').html(
+                        `<button class="btn btn-sm btn-primary view-player-detail" data-player-id="${player.id}">
+                            <i class="fa fa-eye"></i> View
+                        </button>`
+                    ));
+                    
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error populating player stats table:", error);
+            }
+        },
+        
+        /**
+         * Load team analytics
+         */
+        loadTeamAnalytics: function() {
+            try {
+                var teamId = $('#teamSelect').val();
+                var timeRange = $('#timeRange').val();
+                
+                if (!teamId) {
+                    this.showError("Please select a team");
+                    return;
+                }
+                
+                // Show team dashboard
+                $('#teamDashboard').fadeIn();
+                
+                // Update team analytics data
+                this.updateTeamAnalytics(teamId, timeRange);
+                
+            } catch (error) {
+                console.error("Error loading team analytics:", error);
+            }
+        },
+        
+        /**
+         * Update team analytics display
+         * @param {number} teamId - Team ID
+         * @param {string} timeRange - Time range filter
+         */
+        updateTeamAnalytics: function(teamId, timeRange) {
+            try {
+                // Simulate loading team analytics (replace with actual API call)
+                var teamAnalytics = {
+                    overallRating: 88.5,
+                    winRate: 0.75,
+                    avgGameLength: '32:45',
+                    teamKDA: 2.8,
+                    earlyGame: 85,
+                    midGame: 90,
+                    lateGame: 88,
+                    aggression: 75,
+                    teamfight: 85,
+                    splitPush: 60,
+                    vision: 80,
+                    objectives: 88,
+                    earlyGameWinProb: 0.68,
+                    midGameWinProb: 0.72,
+                    lateGameWinProb: 0.75
+                };
+                
+                // Update overview metrics
+                $('#teamOverallRating').text(teamAnalytics.overallRating);
+                $('#teamWinRate').text((teamAnalytics.winRate * 100).toFixed(1) + '%');
+                $('#teamAvgGameLength').text(teamAnalytics.avgGameLength);
+                $('#teamKDA').text(teamAnalytics.teamKDA);
+                
+                // Update game phase chart
+                this.gamePhaseChart.data.datasets[0].data = [
+                    teamAnalytics.earlyGame,
+                    teamAnalytics.midGame,
+                    teamAnalytics.lateGame
+                ];
+                this.gamePhaseChart.update();
+                
+                // Update playstyle chart
+                this.playstyleChart.data.datasets[0].data = [
+                    teamAnalytics.aggression,
+                    teamAnalytics.teamfight,
+                    teamAnalytics.splitPush,
+                    teamAnalytics.vision,
+                    teamAnalytics.objectives
+                ];
+                this.playstyleChart.update();
+                
+                // Update win probability
+                this.updateWinProbability(teamAnalytics);
+                
+            } catch (error) {
+                console.error("Error updating team analytics:", error);
+            }
+        },
+        
+        /**
+         * Update win probability display
+         * @param {Object} teamAnalytics - Team analytics data
+         */
+        updateWinProbability: function(teamAnalytics) {
+            try {
+                // Early game
+                var earlyPercent = (teamAnalytics.earlyGameWinProb * 100).toFixed(1);
+                $('#earlyGameProb').css('width', earlyPercent + '%');
+                $('#earlyGameProbText').text(earlyPercent + '%');
+                
+                // Mid game
+                var midPercent = (teamAnalytics.midGameWinProb * 100).toFixed(1);
+                $('#midGameProb').css('width', midPercent + '%');
+                $('#midGameProbText').text(midPercent + '%');
+                
+                // Late game
+                var latePercent = (teamAnalytics.lateGameWinProb * 100).toFixed(1);
+                $('#lateGameProb').css('width', latePercent + '%');
+                $('#lateGameProbText').text(latePercent + '%');
+                
+            } catch (error) {
+                console.error("Error updating win probability:", error);
+            }
+        },
+        
+        /**
+         * Load box score for selected game
+         */
+        loadBoxScore: function() {
+            try {
+                var gameId = $('#gameSelect').val();
+                
+                if (!gameId) {
+                    this.showError("Please select a game");
+                    return;
+                }
+                
+                // Show box score display
+                $('#boxScoreDisplay').fadeIn();
+                
+                // Load box score data
+                this.updateBoxScore(gameId);
+                
+            } catch (error) {
+                console.error("Error loading box score:", error);
+            }
+        },
+        
+        /**
+         * Update box score display
+         * @param {number} gameId - Game ID
+         */
+        updateBoxScore: function(gameId) {
+            try {
+                // Simulate loading box score (replace with actual API call)
+                var boxScore = {
+                    title: 'T1 vs GenG - January 15, 2024',
+                    players: [
+                        {
+                            name: 'Zeus',
+                            position: 'TOP',
+                            kills: 3,
+                            deaths: 1,
+                            assists: 8,
+                            cs: 245,
+                            gold: 14500,
+                            damage: 18200,
+                            visionScore: 35,
+                            rating: 87.5
+                        },
+                        {
+                            name: 'Canyon',
+                            position: 'JGL',
+                            kills: 5,
+                            deaths: 2,
+                            assists: 12,
+                            cs: 180,
+                            gold: 13200,
+                            damage: 16800,
+                            visionScore: 52,
+                            rating: 92.1
+                        }
+                    ]
+                };
+                
+                // Update title
+                $('#boxScoreTitle').text(boxScore.title);
+                
+                // Update table
+                var tbody = $('#boxScoreTableBody');
+                tbody.empty();
+                
+                boxScore.players.forEach(function(player) {
+                    var row = $('<tr>');
+                    
+                    row.append($('<td>').text(player.name));
+                    row.append($('<td>').html(
+                        `<span class="position-badge position-${player.position.toLowerCase()}">${player.position}</span>`
+                    ));
+                    row.append($('<td>').text(player.kills));
+                    row.append($('<td>').text(player.deaths));
+                    row.append($('<td>').text(player.assists));
+                    row.append($('<td>').text(player.cs));
+                    row.append($('<td>').text(player.gold.toLocaleString()));
+                    row.append($('<td>').text(player.damage.toLocaleString()));
+                    row.append($('<td>').text(player.visionScore));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${player.rating}</span>`
+                    ));
+                    
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error updating box score:", error);
+            }
+        },
+        
+        /**
+         * Load MVP analysis
+         */
+        loadMVPAnalysis: function() {
+            try {
+                // Simulate loading MVP data (replace with actual API call)
+                var mvpData = [
+                    {
+                        rank: 1,
+                        name: 'Faker',
+                        team: 'T1',
+                        position: 'MID',
+                        mvpScore: 95.2,
+                        performance: 94.8,
+                        impact: 96.1,
+                        consistency: 94.7
+                    },
+                    {
+                        rank: 2,
+                        name: 'Canyon',
+                        team: 'GenG',
+                        position: 'JGL',
+                        mvpScore: 92.1,
+                        performance: 91.5,
+                        impact: 93.2,
+                        consistency: 91.8
+                    }
+                ];
+                
+                this.populateMVPTable(mvpData);
+                
+            } catch (error) {
+                console.error("Error loading MVP analysis:", error);
+            }
+        },
+        
+        /**
+         * Populate MVP table
+         * @param {Array} mvpData - MVP data
+         */
+        populateMVPTable: function(mvpData) {
+            try {
+                var tbody = $('#mvpTableBody');
+                tbody.empty();
+                
+                mvpData.forEach(function(mvp) {
+                    var row = $('<tr>');
+                    
+                    row.append($('<td>').text(mvp.rank));
+                    row.append($('<td>').text(mvp.name));
+                    row.append($('<td>').text(mvp.team));
+                    row.append($('<td>').html(
+                        `<span class="position-badge position-${mvp.position.toLowerCase()}">${mvp.position}</span>`
+                    ));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${mvp.mvpScore}</span>`
+                    ));
+                    row.append($('<td>').text(mvp.performance));
+                    row.append($('<td>').text(mvp.impact));
+                    row.append($('<td>').text(mvp.consistency));
+                    
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error populating MVP table:", error);
+            }
+        },
+        
+        /**
+         * Load OAT rankings
+         */
+        loadOATRankings: function() {
+            try {
+                // Simulate loading OAT data (replace with actual API call)
+                var oatData = [
+                    {
+                        rank: 1,
+                        name: 'Faker',
+                        position: 'MID',
+                        oatScore: 98.5,
+                        championships: 4,
+                        mvpAwards: 8,
+                        careerRating: 95.2,
+                        longevity: 98,
+                        peakPerformance: 99
+                    },
+                    {
+                        rank: 2,
+                        name: 'Bengi',
+                        position: 'JGL',
+                        oatScore: 92.1,
+                        championships: 3,
+                        mvpAwards: 3,
+                        careerRating: 89.5,
+                        longevity: 88,
+                        peakPerformance: 96
+                    }
+                ];
+                
+                this.populateOATTable(oatData);
+                
+            } catch (error) {
+                console.error("Error loading OAT rankings:", error);
+            }
+        },
+        
+        /**
+         * Populate OAT table
+         * @param {Array} oatData - OAT data
+         */
+        populateOATTable: function(oatData) {
+            try {
+                var tbody = $('#oatTableBody');
+                tbody.empty();
+                
+                oatData.forEach(function(oat) {
+                    var row = $('<tr>');
+                    
+                    row.append($('<td>').text(oat.rank));
+                    row.append($('<td>').text(oat.name));
+                    row.append($('<td>').html(
+                        `<span class="position-badge position-${oat.position.toLowerCase()}">${oat.position}</span>`
+                    ));
+                    row.append($('<td>').html(
+                        `<span class="rating-badge rating-excellent">${oat.oatScore}</span>`
+                    ));
+                    row.append($('<td>').text(oat.championships));
+                    row.append($('<td>').text(oat.mvpAwards));
+                    row.append($('<td>').text(oat.careerRating));
+                    row.append($('<td>').text(oat.longevity));
+                    row.append($('<td>').text(oat.peakPerformance));
+                    
+                    tbody.append(row);
+                });
+                
+            } catch (error) {
+                console.error("Error populating OAT table:", error);
+            }
+        },
+        
+        /**
+         * Load synergy analysis
+         */
+        loadSynergyAnalysis: function() {
+            try {
+                // Simulate loading synergy data (replace with actual API call)
+                var synergyData = [
+                    {
+                        player1: 'Faker',
+                        player2: 'Canyon',
+                        score: 92.5,
+                        description: 'Excellent mid-jungle synergy'
+                    },
+                    {
+                        player1: 'Gumayusi',
+                        player2: 'Keria',
+                        score: 89.2,
+                        description: 'Strong bot lane partnership'
+                    }
+                ];
+                
+                this.populateSynergyMatrix(synergyData);
+                
+            } catch (error) {
+                console.error("Error loading synergy analysis:", error);
+            }
+        },
+        
+        /**
+         * Populate synergy matrix
+         * @param {Array} synergyData - Synergy data
+         */
+        populateSynergyMatrix: function(synergyData) {
+            try {
+                var container = $('#synergyMatrix');
+                container.empty();
+                
+                synergyData.forEach(function(synergy) {
+                    var card = $('<div class="synergy-pair">');
+                    
+                    card.append($('<h6>').text(`${synergy.player1} + ${synergy.player2}`));
+                    card.append($('<div class="synergy-score">').text(synergy.score));
+                    card.append($('<div class="synergy-description">').text(synergy.description));
+                    
+                    container.append(card);
+                });
+                
+            } catch (error) {
+                console.error("Error populating synergy matrix:", error);
+            }
+        },
+        
+        /**
+         * Show player detail modal
+         * @param {number} playerId - Player ID
+         */
+        showPlayerDetail: function(playerId) {
+            try {
+                // Load player detail data
+                var playerDetail = {
+                    name: 'Faker',
+                    position: 'MID',
+                    team: 'T1',
+                    overallRating: 95.2,
+                    // ... more detailed stats
+                };
+                
+                // Populate modal content
+                var content = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>${playerDetail.name}</h4>
+                            <p><strong>Position:</strong> ${playerDetail.position}</p>
+                            <p><strong>Team:</strong> ${playerDetail.team}</p>
+                            <p><strong>Overall Rating:</strong> ${playerDetail.overallRating}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Additional player details -->
+                        </div>
+                    </div>
+                `;
+                
+                $('#playerDetailContent').html(content);
+                $('#playerDetailModal').modal('show');
+                
+            } catch (error) {
+                console.error("Error showing player detail:", error);
+            }
+        },
+        
+        /**
+         * Filter OAT rankings by position
+         */
+        filterOATRankings: function() {
+            try {
+                var position = $('#oatPositionFilter').val();
+                this.loadOATRankings(position);
+                
+            } catch (error) {
+                console.error("Error filtering OAT rankings:", error);
+            }
+        },
+        
+        /**
+         * Export player statistics
+         */
+        exportPlayerStats: function() {
+            try {
+                // Simulate export functionality
+                var data = this.getPlayerStatsData();
+                var csv = this.convertToCSV(data);
+                this.downloadCSV(csv, 'player_stats.csv');
+                
+            } catch (error) {
+                console.error("Error exporting player stats:", error);
+            }
+        },
+        
+        /**
+         * Get player stats data for export
+         * @returns {Array} Player stats data
+         */
+        getPlayerStatsData: function() {
+            // Return current player stats data
+            return [];
+        },
+  /**
+         * Convert array of objects to CSV string
+         * @param {Array} data - Array of objects representing rows
+         * @returns {string} CSV formatted string
+         */
+        convertToCSV: function(data) {
+            if (!data || data.length === 0) {
+                return "";
+            }
+            const keys = Object.keys(data[0]);
+            const lines = [];
+            // Header
+            lines.push(keys.join(","));
+            // Rows
+            data.forEach(row => {
+                const values = keys.map(k => {
+                    let v = row[k] !== undefined && row[k] !== null ? row[k] : "";
+                    // Escape quotes
+                    v = String(v).replace(/"/g, '""');
+                    return `"${v}"`;
+                });
+                lines.push(values.join(","));
+            });
+            return lines.join("\r\n");
+        },
+
+        /**
+         * Trigger download of CSV file in browser
+         * @param {string} csvContent - CSV content string
+         * @param {string} filename - Desired filename
+         */
+        downloadCSV: function(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        /**
+         * Handle window resize events to adjust table responsiveness
+         */
+        handleTableResize: function() {
+            // Example: recalculate column widths or toggle responsive classes
+            $('.table-responsive').each(function() {
+                // force redraw
+                $(this).css('display', 'none').offset();
+                $(this).css('display', '');
+            });
+        },
+
+        /**
+         * Display an error message to the user
+         * @param {string} message - Error message text
+         */
+        showError: function(message) {
+            // Simple toast or alert; could integrate with app's notification system
+            if (window.alert) {
+                alert(message);
+            } else {
+                console.error("Analytics Error:", message);
+            }
+        }
+    };
+
+    // Initialize view on document ready
+    $(document).ready(function() {
+        analyticsView.init();
+    });
+
+    return analyticsView;
+});
